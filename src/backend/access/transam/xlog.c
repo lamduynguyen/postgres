@@ -2443,6 +2443,7 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 					INSTR_TIME_SET_ZERO(start);
 
 				pgstat_report_wait_start(WAIT_EVENT_WAL_WRITE);
+				ereport(LOG, (errmsg("XLogWrite: pg_pwrite [%lu:%lu]", startoffset, nleft)));
 				written = pg_pwrite(openLogFile, from, nleft, startoffset);
 				pgstat_report_wait_end();
 
@@ -3269,6 +3270,7 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 		 * indirect blocks are down on disk.  Therefore, fdatasync(2) or
 		 * O_DSYNC will be sufficient to sync future writes to the log file.
 		 */
+		printf(_("XLogFileInitInternal. pg_pwrite_zeros [%lu:%lu]\n"), 0, wal_segment_size);
 		rc = pg_pwrite_zeros(fd, wal_segment_size, 0);
 
 		if (rc < 0)
@@ -3281,6 +3283,7 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 		 * enough.
 		 */
 		errno = 0;
+		printf(_("XLogFileInitInternal. pg_pwrite [%lu:%lu]\n"), wal_segment_size - 1, 1);
 		if (pg_pwrite(fd, "\0", 1, wal_segment_size - 1) != 1)
 		{
 			/* if write didn't set errno, assume no disk space */
@@ -3486,6 +3489,7 @@ XLogFileCopy(TimeLineID destTLI, XLogSegNo destsegno,
 		}
 		errno = 0;
 		pgstat_report_wait_start(WAIT_EVENT_WAL_COPY_WRITE);
+		printf(_("XLogFileCopy. write [%lu]\n"), sizeof(buffer));
 		if ((int) write(fd, buffer.data, sizeof(buffer)) != (int) sizeof(buffer))
 		{
 			int			save_errno = errno;
@@ -5119,6 +5123,7 @@ BootStrapXLOG(void)
 	/* Write the first page with the initial record */
 	errno = 0;
 	pgstat_report_wait_start(WAIT_EVENT_WAL_BOOTSTRAP_WRITE);
+	printf(_("BootStrapXLOG. write [%lu]\n"), XLOG_BLCKSZ);
 	if (write(openLogFile, page, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 	{
 		/* if write didn't set errno, assume problem is no disk space */

@@ -2947,11 +2947,12 @@ create_xlog_or_symlink(void)
 			pg_fatal("WAL directory location must be an absolute path");
 
 		/* check if the specified xlog directory exists/is empty */
+		printf(_("pg_check_dir directory %s ... "), xlog_dir);
 		switch ((ret = pg_check_dir(xlog_dir)))
 		{
 			case 0:
 				/* xlog directory not there, must create it */
-				printf(_("creating directory %s ... "),
+				printf(_("creating xlog directory %s ... "),
 					   xlog_dir);
 				fflush(stdout);
 
@@ -2970,11 +2971,11 @@ create_xlog_or_symlink(void)
 					   xlog_dir);
 				fflush(stdout);
 
-				if (chmod(xlog_dir, pg_dir_create_mode) != 0)
-					pg_fatal("could not change permissions of directory \"%s\": %m",
-							 xlog_dir);
-				else
-					check_ok();
+				// if (chmod(xlog_dir, pg_dir_create_mode) != 0)
+				// 	pg_fatal("could not change permissions of directory \"%s\": %m",
+				// 			 xlog_dir);
+				// else
+				// 	check_ok();
 
 				found_existing_xlogdir = true;
 				break;
@@ -2993,7 +2994,7 @@ create_xlog_or_symlink(void)
 
 			default:
 				/* Trouble accessing directory */
-				pg_fatal("could not access directory \"%s\": %m", xlog_dir);
+				pg_fatal("could not access directory %d \"%s\": %m", ret, xlog_dir);
 		}
 
 		if (symlink(xlog_dir, subdirloc) != 0)
